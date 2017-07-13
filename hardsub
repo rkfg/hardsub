@@ -1,0 +1,67 @@
+#!/bin/bash
+
+BITRATE=
+VENCODER=h264_nvenc
+FLAGS=-n
+DIR=hardsub
+STRACK=0
+
+help () {
+	echo "Usage: `basename $0` [-b bitrate] [-e] [-y] [-h] [-d output_dir] [-s track] files...
+-b bitrate         Set target bitrate in bits/sec (default: choose automatically)
+-e                 Use HEVC/H.265 encoder (slower)
+-y                 Overwrite existing files without asking
+-d output_dir      Set the directory for resulting files (will be create if doesn't exist)
+-s track           Subtitles track number
+-h                 This help message"
+	exit 1
+}
+
+while getopts b:eayhd:s: f
+do
+	case $f in
+		b) BITRATE=$OPTARG
+		;;
+		e) VENCODER=hevc_nvenc
+		;;
+		y) FLAGS=-y
+		;;
+		h) help
+		;;
+		d) DIR=$OPTARG
+		;;
+		s) STRACK=$OPTARG
+		;;
+	esac
+done
+shift $(( OPTIND-1 ))
+
+if [ $VENCODER != "hevc_nvenc" ]
+then
+	FLAGS="$FLAGS -pix_fmt yuv420p -movflags +faststart"
+fi
+
+if [ -z "$1" ]
+then
+  echo "No input files specified"
+  exit 1
+fi
+
+mkdir -p "$DIR"
+
+for i in "$@"
+do
+  sb=$(esc=$(echo "$i" | sed "s#\([':]\)#\\\\\1#g"); printf "subtitles=%q:si=%d" "$esc" "$STRACK")
+  echo "$sb"
+  AENCODER=copy
+  FFPROBE=$( ffprobe "$i" 2>&1 )
+  echo "$FFPROBE" | grep "Audio: flac" && AENCODER=aac
+  if [ -z "$BITRATE" ]
+  then
+  	 CURBITRATE=$(echo "$FFPROBE" | sed -n 's#\s*Duration: .* bitrate:\s*\(\S*\) kb/s#\1#p' | head -1)
+  	 CURBITRATE=$(( CURBITRATE / 100 * 100 + 200 ))k
+  else
+  	 CURBITRATE=$BITRATE
+  fi
+  ffmpeg -i "$i" -sn -c:v "$VENCODER" -b:v "$CURBITRATE" -c:a "$AENCODER" -vf "$sb" $FLAGS "$DIR/$i"
+done
