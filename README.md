@@ -1,6 +1,6 @@
 # Hardsub
-A simple script to produce hardsubbed video suitable for Smart TVs. ASS-styled subtitles are not supported well so hardsub
-is preferred. Use -h to get a list of supported parameters.
+A simple script to produce hardsubbed video suitable for Smart TVs. ASS-styled subtitles are not supported well
+on hardware players so hardsub is preferred. Use -h to get a list of supported parameters.
 
 # Notes
 - The autodetected bitrate is the source bitrate rounded down to hundreds plus 200. It's purely empirical.
