@@ -48,6 +48,7 @@ if [ $VENCODER != "hevc_nvenc" ]
 then
   FLAGS="$FLAGS -pix_fmt yuv420p -movflags +faststart"
 fi
+FLAGS="$FLAGS -map_chapters -1"
 
 if [ -z "$1" ]
 then
