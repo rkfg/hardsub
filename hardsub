@@ -29,7 +29,7 @@ dump_streams() {
   IDX=0
   while [ -n "$RESULT" ]
   do
-    RESULT=$( ffprobe -v error -show_entries stream=codec_name,codec_long_name:stream_tags=language -select_streams $1:$IDX -of default=nw=1 "$2" )
+    RESULT=$( ffprobe -v error -show_entries stream=codec_name,codec_long_name:stream_tags=title,language -select_streams $1:$IDX -of default=nw=1 "$2" )
     if [ -n "$RESULT" ]
     then
       if [ $IDX -gt 0 ]
