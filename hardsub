@@ -8,7 +8,7 @@ STRACK=0
 NOFLAC=
 FILTER=text
 ATRACK=0
-ANALYZE=
+INFO=
 
 help () {
   echo "Usage: `basename $0` [[[-b bitrate] [-e] [-y] [-h] [-f] [-p] [-o output_dir] [-s track]] [-z]] files...
@@ -19,7 +19,7 @@ help () {
 -s track           Subtitles track number (use -z to find them)
 -a track           Audio track number (use -z to find them)
 -f                 Don't autoconvert FLAC audio to AAC
--z                 Analyze and print streams information without converting the files
+-i                 Print streams information without converting the files
 -h                 This help message"
   exit 1
 }
@@ -52,7 +52,7 @@ fancy_stars() {
   echo
 }
 
-while getopts b:eyho:s:a:fz f
+while getopts b:eyho:s:a:fi f
 do
   case $f in
     b) BITRATE=$OPTARG
@@ -71,7 +71,7 @@ do
     ;;
     f) NOFLAC=1
     ;;
-    z) ANALYZE=1
+    i) INFO=1
     ;;
   esac
 done
@@ -94,7 +94,7 @@ FLAGS="$FLAGS -map_chapters -1 -map 0:a:$ATRACK -hide_banner"
 for i in "$@"
 do
   BN="$(basename "$i")"
-  if [ -n "$ANALYZE" ]
+  if [ -n "$INFO" ]
   then
     fancy_stars "$BN"
     echo "* $BN *"
