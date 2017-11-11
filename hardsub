@@ -101,6 +101,7 @@ do
     fancy_stars "$BN"
     echo "----- VIDEO -----"
     dump_streams V "$i"
+    echo "bitrate=$(( $( ffprobe -v error -show_entries format=bit_rate -of default=nw=1:nk=1 "$i" ) / 1024 )) Kbit/s"
     echo
     echo "----- AUDIO -----"
     dump_streams a "$i"
