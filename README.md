@@ -10,7 +10,5 @@ on hardware players so hardsub is preferred. Use -h to get a list of supported p
 - video stream selection is not supported at the moment as it's very rare to have more than one video stream in a file (personally, I've never seen that). Still, it's pretty easy to add if needed.
 - text and picture-based subtitles are supported, currently the picture-based overlay approach is chosen if the subtitle type contains "pgs" which is common for BluRay streams. There could be more such formats that I'm unaware of.
 - Softsubs are always discarded as that's the whole point of the script.
-- nvenc NVIDIA's hardware encoding is always used (5x acceleration or better usually). No autodetection
-or force software encoding options currently.
 - HEVC/H.265 is encoded in the source pixel format, I noticed that my TV supports 10-bit H.265 though it doesn't support
 10-bit H.264 so no need to make the quality worse without the real need. YMMV. For H.264 the script forces y420p.

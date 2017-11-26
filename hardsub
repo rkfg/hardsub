@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BITRATE=
-VENCODER=h264_nvenc
+VENCODER=h264
 FLAGS=-n
 DIR=hardsub
 STRACK=0
@@ -9,6 +9,8 @@ NOFLAC=
 FILTER=text
 ATRACK=0
 INFO=
+SW=
+HEVC=
 
 help () {
   echo "Usage: `basename $0` [[[-b bitrate] [-e] [-y] [-h] [-f] [-p] [-o output_dir] [-s track]] [-z]] files...
@@ -20,7 +22,8 @@ help () {
 -a track           Audio track number (use -z to find them)
 -f                 Don't autoconvert FLAC audio to AAC
 -i                 Print streams information without converting the files
--h                 This help message"
+-h                 This help message
+-w                 Use software encoding"
   exit 1
 }
 
@@ -52,12 +55,12 @@ fancy_stars() {
   echo
 }
 
-while getopts b:eyho:s:a:fi f
+while getopts b:eyho:s:a:fiw f
 do
   case $f in
     b) BITRATE=$OPTARG
     ;;
-    e) VENCODER=hevc_nvenc
+    e) HEVC=1
     ;;
     y) FLAGS=-y
     ;;
@@ -73,13 +76,21 @@ do
     ;;
     i) INFO=1
     ;;
+    w) SW=1
   esac
 done
 shift $(( OPTIND-1 ))
 
-if [ $VENCODER != "hevc_nvenc" ]
+if [ -z "$HEVC" ]
 then
   FLAGS="$FLAGS -pix_fmt yuv420p -movflags +faststart"
+else
+  VENCODER="hevc"
+fi
+
+if [ -z "$SW" ]
+then
+  VENCODER="${VENCODER}_nvenc"
 fi
 
 if [ -z "$1" ]
