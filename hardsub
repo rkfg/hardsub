@@ -1,6 +1,7 @@
 #!/bin/bash
 
 BITRATE=
+QUALITY=
 VENCODER=h264
 FLAGS=-n
 DIR=hardsub
@@ -15,6 +16,7 @@ HEVC=
 help () {
   echo "Usage: `basename $0` [[[-b bitrate] [-e] [-y] [-h] [-f] [-p] [-o output_dir] [-s track]] [-i]] files...
 -b bitrate         Set target bitrate in bits/sec (default: choose automatically)
+-c crf             Set constant rate factor, forces software encoding (default: none, use bitrate)
 -e                 Use HEVC/H.265 encoder (slower)
 -y                 Overwrite existing files without asking
 -o output_dir      Set the directory for resulting files (will be created if doesn't exist)
@@ -55,10 +57,13 @@ fancy_stars() {
   echo
 }
 
-while getopts b:eyho:s:a:fiw f
+while getopts b:c:eyho:s:a:fiw f
 do
   case $f in
     b) BITRATE=$OPTARG
+    ;;
+    c) QUALITY=$OPTARG
+       SW=1
     ;;
     e) HEVC=1
     ;;
@@ -104,7 +109,7 @@ mkdir -p "$DIR"
 FLAGS="$FLAGS -map_chapters -1 -map 0:a:$ATRACK -hide_banner"
 for i in "$@"
 do
-  BN="$(basename "$i")"
+  BN="$(basename "$i" | sed -e 's#\.[^.]*$#.mp4#')"
   if [ -n "$INFO" ]
   then
     fancy_stars "$BN"
@@ -124,7 +129,7 @@ do
     sb=$(esc=$(echo "$i" | sed "s#\([':]\)#\\\\\1#g"); printf "subtitles=%q:si=%d" "$esc" "$STRACK")
     AENCODER=copy
     CODEC=$( ffprobe -v error -show_entries stream=codec_name -select_streams a:$ATRACK -of default=nw=1:nk=1 "$i" )
-    [ -z "$NOFLAC" ] && [ "$CODEC" = "flac" ] && AENCODER=aac
+    [ -z "$NOFLAC" ] && [ "$CODEC" != "aac" ] && AENCODER=aac
     if [ -z "$BITRATE" ]
     then
       CURBITRATE=$(ffprobe -v error -show_entries format=bit_rate -select_streams v -of default=noprint_wrappers=1:nokey=1 "$i")
@@ -132,12 +137,18 @@ do
     else
       CURBITRATE=$BITRATE
     fi
+    if [ -n "$QUALITY" ]
+    then
+      FQUALITY="-crf $QUALITY"
+    else
+      FQUALITY="-b:v $CURBITRATE"
+    fi
 
     if ffprobe -v error -show_entries stream=codec_name -select_streams s:$STRACK -of default=nw=1:nk=1 "$i" | grep "pgs" >/dev/null
     then
-      ffmpeg -i "$i" -sn -c:v "$VENCODER" -b:v "$CURBITRATE" -c:a "$AENCODER" -filter_complex [0:v][0:s:$STRACK]overlay[v] -map [v] $FLAGS "$DIR/$BN"
+      ffmpeg -i "$i" -sn -c:v "$VENCODER" $FQUALITY -c:a "$AENCODER" -filter_complex [0:v][0:s:$STRACK]overlay[v] -map [v] $FLAGS "$DIR/$BN"
     else
-      ffmpeg -i "$i" -sn -c:v "$VENCODER" -b:v "$CURBITRATE" -c:a "$AENCODER" -vf "$sb" -map 0:v:0 $FLAGS "$DIR/$BN"
+      ffmpeg -i "$i" -sn -c:v "$VENCODER" $FQUALITY -c:a "$AENCODER" -vf "$sb" -map 0:v:0 $FLAGS "$DIR/$BN"
     fi
   fi
 done
